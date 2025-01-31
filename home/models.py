@@ -4,7 +4,7 @@ from django.db import models
 from django.utils import timezone
 
 
-class CustomUser(AbstractUser):
+class User(AbstractUser):
     # حذف فیلدهای username و email از مدل پیش‌فرض
     username = None
     email = None
@@ -30,6 +30,8 @@ class Question(models.Model):
     text = models.TextField(verbose_name='متن سوال')
     expiry_date = models.DateTimeField(verbose_name='تاریخ انقضا')
     is_active = models.BooleanField(default=False, verbose_name='فعال')
+    correct_responders = models.ManyToManyField(User, blank=True, related_name='correct_questions',
+                                                verbose_name='کاربران با پاسخ درست')
 
     def __str__(self):
         return self.text[:50]
@@ -44,7 +46,24 @@ class Question(models.Model):
 class Choice(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='choices')
     text = models.CharField(max_length=200, verbose_name='متن گزینه')
-    votes = models.IntegerField(default=0, verbose_name='تعداد رای')
+    is_correct = models.BooleanField(default=False, verbose_name='آیا پاسخ درست است؟')
 
     def __str__(self):
         return self.text
+
+
+
+class UserResponse(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='کاربر')
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, verbose_name='سوال')
+    selected_choice = models.ForeignKey(Choice, on_delete=models.CASCADE, verbose_name='گزینه انتخاب شده')
+    is_correct = models.BooleanField(default=False, verbose_name='آیا پاسخ درست است؟')
+
+    def save(self, *args, **kwargs):
+        # بررسی اینکه آیا گزینه انتخاب شده، پاسخ درست است یا خیر
+        if self.selected_choice.is_correct:
+            self.is_correct = True
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.user.phone_number} - {self.question.text[:50]}"
