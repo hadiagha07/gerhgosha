@@ -1,0 +1,50 @@
+# models.py
+from django.contrib.auth.models import AbstractUser
+from django.db import models
+from django.utils import timezone
+
+
+class CustomUser(AbstractUser):
+    # حذف فیلدهای username و email از مدل پیش‌فرض
+    username = None
+    email = None
+
+    phone_number = models.CharField(max_length=15, unique=True, verbose_name='شماره موبایل')
+    first_name = models.CharField(max_length=30, verbose_name='نام')
+    last_name = models.CharField(max_length=30, verbose_name='نام خانوادگی')
+    province = models.CharField(max_length=50, verbose_name='استان ')
+    GENDER_CHOICES = [
+        ('M', 'مرد'),
+        ('F', 'زن'),
+    ]
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, verbose_name='جنسیت')
+
+    USERNAME_FIELD = 'phone_number'
+    REQUIRED_FIELDS = ['first_name', 'last_name', 'province', 'gender']
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name} - {self.phone_number}"
+
+
+class Question(models.Model):
+    text = models.TextField(verbose_name='متن سوال')
+    expiry_date = models.DateTimeField(verbose_name='تاریخ انقضا')
+    is_active = models.BooleanField(default=False, verbose_name='فعال')
+
+    def __str__(self):
+        return self.text[:50]
+
+    def save(self, *args, **kwargs):
+        if self.is_active:
+            # غیرفعال کردن تمام سوالات دیگر هنگام فعال کردن این سوال
+            Question.objects.exclude(pk=self.pk).update(is_active=False)
+        super().save(*args, **kwargs)
+
+
+class Choice(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='choices')
+    text = models.CharField(max_length=200, verbose_name='متن گزینه')
+    votes = models.IntegerField(default=0, verbose_name='تعداد رای')
+
+    def __str__(self):
+        return self.text
