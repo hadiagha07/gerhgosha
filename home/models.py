@@ -1,8 +1,3 @@
-# models.py
-from django.contrib.auth.models import AbstractUser, BaseUserManager
-from django.db import models
-from django.utils import timezone
-
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 
@@ -80,9 +75,9 @@ class UserResponse(models.Model):
     is_correct = models.BooleanField(default=False, verbose_name='آیا پاسخ درست است؟')
 
     def save(self, *args, **kwargs):
-        # بررسی اینکه آیا گزینه انتخاب شده، پاسخ درست است یا خیر
         if self.selected_choice.is_correct:
             self.is_correct = True
+            self.question.correct_responders.add(self.user)
         super().save(*args, **kwargs)
 
     def __str__(self):

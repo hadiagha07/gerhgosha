@@ -49,7 +49,7 @@ class UserSerializer(serializers.ModelSerializer):
 class ChoiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Choice
-        fields = ['id', 'text', 'votes']
+        fields = ['id', 'text']
 
 
 class QuestionSerializer(serializers.ModelSerializer):

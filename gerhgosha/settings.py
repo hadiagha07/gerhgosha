@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     # libraries
     'rest_framework',
     'rest_framework.authtoken',
+    'drf_yasg',
 
 ]
 
@@ -50,8 +51,9 @@ INSTALLED_APPS = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
-    ]
+    ],
 }
+
 
 
 MIDDLEWARE = [
