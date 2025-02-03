@@ -2,8 +2,10 @@ from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
+from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from .models import *
+from rest_framework.permissions import AllowAny
 from .serializers import *
 
 
@@ -22,6 +24,26 @@ class SignUpView(generics.CreateAPIView):
             "token": token.key
         }, status=status.HTTP_201_CREATED)
 
+
+class LoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        phone_number = request.data.get('phone_number')
+        password = request.data.get('password')
+
+        if not phone_number or not password:
+            return Response({'error': 'شماره موبایل و رمز عبور الزامی هستند.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = authenticate(phone_number=phone_number, password=password)
+        if user is None:
+            return Response({'error': 'نام کاربری یا رمز عبور اشتباه است.'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({
+            "user": UserSerializer(user).data,
+            "token": token.key
+        }, status=status.HTTP_200_OK)
 
 
 class ActiveQuestionView(generics.RetrieveAPIView):
