@@ -45,15 +45,14 @@ class Question(models.Model):
     text = models.TextField(verbose_name='متن سوال')
     expiry_date = models.DateTimeField(verbose_name='تاریخ انقضا')
     is_active = models.BooleanField(default=False, verbose_name='فعال')
-    correct_responders = models.ManyToManyField(User, blank=True, related_name='correct_questions',
-                                                verbose_name='کاربران با پاسخ درست')
+    correct_responders = models.ManyToManyField(User, blank=True, related_name='correct_questions', verbose_name='کاربران با پاسخ درست')
 
     def __str__(self):
         return self.text[:50]
 
     def save(self, *args, **kwargs):
+        # غیرفعال کردن سوالات دیگر هنگام فعال‌سازی این سوال
         if self.is_active:
-            # غیرفعال کردن تمام سوالات دیگر هنگام فعال کردن این سوال
             Question.objects.exclude(pk=self.pk).update(is_active=False)
         super().save(*args, **kwargs)
 
