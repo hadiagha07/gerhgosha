@@ -196,3 +196,12 @@ class CorrectRespondersView(APIView):
         ]
 
         return Response({'correct_responders': correct_responders_data}, status=status.HTTP_200_OK)
+
+
+
+class TicketListCreateView(generics.ListCreateAPIView):
+    serializer_class = TicketSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Ticket.objects.filter(user=self.request.user)

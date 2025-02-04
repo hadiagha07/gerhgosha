@@ -26,4 +26,5 @@ urlpatterns = [
     path('active-question/', ActiveQuestionView.as_view(), name='active-question'),
     path('submit-response/', SubmitResponseView.as_view(), name='submit-response'),
     path('correct-responders/', CorrectRespondersView.as_view(), name='correct-responders'),
+    path('tickets/', TicketListCreateView.as_view(), name='ticket_list_create'),
 ]

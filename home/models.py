@@ -3,6 +3,7 @@ from django.db import models
 from django.utils.timezone import now, timedelta
 import random
 
+
 class CustomUserManager(BaseUserManager):
     def create_user(self, phone_number, password=None, **extra_fields):
         if not phone_number:
@@ -58,7 +59,8 @@ class Question(models.Model):
     text = models.TextField(verbose_name='متن سوال')
     expiry_date = models.DateTimeField(verbose_name='تاریخ انقضا')
     is_active = models.BooleanField(default=False, verbose_name='فعال')
-    correct_responders = models.ManyToManyField(User, blank=True, related_name='correct_questions', verbose_name='کاربران با پاسخ درست')
+    correct_responders = models.ManyToManyField(User, blank=True, related_name='correct_questions',
+                                                verbose_name='کاربران با پاسخ درست')
 
     def __str__(self):
         return self.text[:50]
@@ -79,7 +81,6 @@ class Choice(models.Model):
         return self.text
 
 
-
 class UserResponse(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='کاربر')
     question = models.ForeignKey(Question, on_delete=models.CASCADE, verbose_name='سوال')
@@ -94,3 +95,44 @@ class UserResponse(models.Model):
 
     def __str__(self):
         return f"{self.user.phone_number} - {self.question.text[:50]}"
+
+
+class Ticket(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'در حال بررسی'),
+        ('replied', 'پاسخ داده شده'),
+    ]
+
+    subject = models.CharField(max_length=255, verbose_name='موضوع')
+    body = models.TextField(verbose_name='متن پیام')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='کاربر')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='وضعیت')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ آخرین به‌روزرسانی')
+
+    class Meta:
+        verbose_name = 'تیکت'
+        verbose_name_plural = 'تیکت‌ها'
+
+    def __str__(self):
+        return self.subject
+
+
+class TicketReply(models.Model):
+    ticket = models.ForeignKey(Ticket, related_name='replies', on_delete=models.CASCADE, verbose_name='تیکت')
+    reply_body = models.TextField(verbose_name='متن پاسخ')
+    admin = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='مدیر')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ پاسخ')
+
+    class Meta:
+        verbose_name = 'پاسخ تیکت'
+        verbose_name_plural = 'پاسخ‌های تیکت'
+
+    def __str__(self):
+        return f"پاسخ به {self.ticket.subject}"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.ticket.status != 'replied':
+            self.ticket.status = 'replied'
+            self.ticket.save(update_fields=['status'])

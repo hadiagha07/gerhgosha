@@ -81,3 +81,10 @@ class UserResponseAdmin(admin.ModelAdmin):
         if obj:
             readonly.extend(['user', 'question', 'selected_choice'])
         return readonly
+
+
+@admin.register(Ticket)
+class TicketAdmin(admin.ModelAdmin):
+    list_display = ('subject', 'user', 'status', 'created_at')
+    list_filter = ('status', 'created_at')
+    search_fields = ('subject', 'user__phone_number')

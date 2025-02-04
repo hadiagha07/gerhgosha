@@ -63,9 +63,7 @@ class UserSerializer(serializers.ModelSerializer):
         validated_data.pop('confirm_password')
         password = validated_data.pop('password')
 
-
         phone_number = validated_data.pop('phone_number')
-
 
         user = User.objects.create_user(
             phone_number=phone_number,
@@ -109,3 +107,15 @@ class UserResponseSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('گزینه انتخاب شده متعلق به این سوال نیست.')
 
         return data
+
+
+class TicketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = ['id', 'subject', 'message', 'status', 'created_at']
+        read_only_fields = ['id', 'status', 'created_at']
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        validated_data['user'] = request.user
+        return super().create(validated_data)
