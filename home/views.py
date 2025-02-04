@@ -10,20 +10,72 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
 
+class RequestOTPView(generics.GenericAPIView):
+    """
+    ارسال کد تأیید به شماره موبایل
+    """
+    serializer_class = OTPSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        phone_number = serializer.validated_data['phone_number']
+        otp_entry, created = PhoneOTP.objects.get_or_create(phone_number=phone_number)
+        otp_entry.generate_otp()
+
+        # چاپ کد تأیید در ترمینال (به جای ارسال پیامک)
+        print(f"کد تأیید برای {phone_number}: {otp_entry.otp}")
+
+        return Response({"message": "کد تأیید ارسال شد."}, status=status.HTTP_200_OK)
+
+
+class VerifyOTPView(generics.GenericAPIView):
+    """
+    تأیید شماره موبایل با کد OTP
+    """
+    serializer_class = VerifyOTPSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        phone_number = serializer.validated_data['phone_number']
+        otp_entry = PhoneOTP.objects.get(phone_number=phone_number)
+        otp_entry.is_verified = True
+        otp_entry.save()
+
+        return Response({"message": "شماره موبایل با موفقیت تأیید شد."}, status=status.HTTP_200_OK)
+
+
 class SignUpView(generics.CreateAPIView):
+    """
+    ثبت‌نام کاربر جدید
+    """
     serializer_class = UserSerializer
     permission_classes = [permissions.AllowAny]
 
-    @swagger_auto_schema(
-        operation_description="ثبت‌نام کاربر جدید و دریافت توکن",
-        request_body=UserSerializer,
-        responses={201: UserSerializer}
-    )
     def create(self, request, *args, **kwargs):
+        phone_number = request.data.get('phone_number')
+
+        # چک اعتبار شماره موبایل
+        otp_entry = PhoneOTP.objects.filter(phone_number=phone_number, is_verified=True).first()
+        if not otp_entry:
+            return Response({"error": "شماره موبایل تأیید نشده است."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # ثبت‌نام کاربر
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+
+        # حذف OTP پس از موفقیت
+        otp_entry.delete()
+
+        # ایجاد توکن برای کاربر
         token, created = Token.objects.get_or_create(user=user)
+
         return Response({
             "user": UserSerializer(user).data,
             "token": token.key
@@ -61,7 +113,6 @@ class LoginView(APIView):
             "user": UserSerializer(user).data,
             "token": token.key
         }, status=status.HTTP_200_OK)
-
 
 
 class ActiveQuestionView(generics.RetrieveAPIView):
@@ -121,8 +172,6 @@ class SubmitResponseView(APIView):
             'message': 'پاسخ شما ثبت شد.',
             'is_correct': selected_choice.is_correct
         }, status=status.HTTP_201_CREATED)
-
-
 
 
 class CorrectRespondersView(APIView):

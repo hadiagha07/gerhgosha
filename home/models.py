@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
-
+from django.utils.timezone import now, timedelta
+import random
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, phone_number, password=None, **extra_fields):
@@ -15,6 +16,18 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(phone_number, password, **extra_fields)
+
+
+class PhoneOTP(models.Model):
+    phone_number = models.CharField(max_length=15, unique=True, verbose_name='شماره موبایل')
+    otp = models.CharField(max_length=6, verbose_name='کد تأیید')
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_verified = models.BooleanField(default=False)
+
+    def generate_otp(self):
+        self.otp = f"{random.randint(100000, 999999)}"
+        self.created_at = now()
+        self.save()
 
 
 class User(AbstractUser):

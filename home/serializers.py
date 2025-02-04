@@ -2,6 +2,35 @@ from rest_framework import serializers
 from .models import *
 
 
+class OTPSerializer(serializers.Serializer):
+    phone_number = serializers.CharField(max_length=15)
+
+    def validate_phone_number(self, phone_number):
+        # چک کردن وجود شماره در دیتابیس
+        if User.objects.filter(phone_number=phone_number).exists():
+            raise serializers.ValidationError("این شماره موبایل قبلاً ثبت شده است.")
+        return phone_number
+
+
+class VerifyOTPSerializer(serializers.Serializer):
+    phone_number = serializers.CharField(max_length=15)
+    otp = serializers.CharField(max_length=6)
+
+    def validate(self, data):
+        phone_number = data.get("phone_number")
+        otp = data.get("otp")
+
+        otp_entry = PhoneOTP.objects.filter(phone_number=phone_number).first()
+        if not otp_entry or otp_entry.otp != otp:
+            raise serializers.ValidationError("کد تأیید وارد شده صحیح نیست.")
+
+        # بررسی انقضای کد (مثلاً 5 دقیقه)
+        if now() > otp_entry.created_at + timedelta(minutes=5):
+            raise serializers.ValidationError("کد تأیید منقضی شده است.")
+
+        return data
+
+
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
     confirm_password = serializers.CharField(write_only=True, required=True)
