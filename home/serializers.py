@@ -109,13 +109,34 @@ class UserResponseSerializer(serializers.ModelSerializer):
         return data
 
 
+class TicketReplySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TicketReply
+        fields = ['id', 'reply_body', 'admin', 'created_at']
+        read_only_fields = ['id', 'created_at', 'admin']
+
+
 class TicketSerializer(serializers.ModelSerializer):
+    replies = TicketReplySerializer(many=True, read_only=True)
+
     class Meta:
         model = Ticket
-        fields = ['id', 'subject', 'message', 'status', 'created_at']
-        read_only_fields = ['id', 'status', 'created_at']
+        fields = ['id', 'subject', 'body', 'status', 'created_at', 'updated_at', 'replies']
+        read_only_fields = ['id', 'status', 'created_at', 'updated_at', 'replies']
 
     def create(self, validated_data):
-        request = self.context.get('request')
-        validated_data['user'] = request.user
-        return super().create(validated_data)
+        request = self.context['request']
+        return Ticket.objects.create(user=request.user, **validated_data)
+
+
+class ContactInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactInfo
+        fields = [
+            'address',
+            'phone_number',
+            'telegram_id',
+            'ita_id',
+            'whatsapp_id',
+            'instagram_id'
+        ]

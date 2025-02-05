@@ -21,10 +21,13 @@ urlpatterns = [
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('send-otp/', RequestOTPView.as_view(), name='send_otp'),  # ارسال کد تأیید
     path('verify-otp/', VerifyOTPView.as_view(), name='verify_otp'),  # تأیید کد
-    path('sign-up/', SignUpView.as_view(), name='sign_up'),  # ثبت‌نام کاربر
+    path('sign-up/', SignUpView.as_view(), name='sign_up'),
     path('login/', LoginView.as_view(), name='login'),
     path('active-question/', ActiveQuestionView.as_view(), name='active-question'),
     path('submit-response/', SubmitResponseView.as_view(), name='submit-response'),
     path('correct-responders/', CorrectRespondersView.as_view(), name='correct-responders'),
-    path('tickets/', TicketListCreateView.as_view(), name='ticket_list_create'),
+    path('tickets/', TicketCreateView.as_view(), name='ticket_create_list'),  # ساخت و مشاهده لیست تیکت‌ها
+    path('tickets/<int:pk>/', TicketDetailView.as_view(), name='ticket_detail'),  # جزئیات تیکت
+    path('tickets/<int:pk>/reply/', TicketReplyView.as_view(), name='ticket_reply'),
+    path('contact-info/', ContactInfoView.as_view(), name='contact-info'),
 ]

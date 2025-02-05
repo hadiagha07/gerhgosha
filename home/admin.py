@@ -44,6 +44,7 @@ class ChoiceInline(admin.TabularInline):
 class QuestionAdmin(admin.ModelAdmin):
     list_display = ('is_active', 'expiry_date')
     inlines = [ChoiceInline]
+
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
         if obj:  # فقط زمانی که یک سوال خاص در حال ویرایش است
@@ -52,6 +53,7 @@ class QuestionAdmin(admin.ModelAdmin):
             ).values_list('user', flat=True)
             form.base_fields['correct_responders'].queryset = obj.correct_responders.filter(id__in=correct_users)
         return form
+
 
 admin.site.register(Question, QuestionAdmin)
 
@@ -83,8 +85,51 @@ class UserResponseAdmin(admin.ModelAdmin):
         return readonly
 
 
+class TicketReplyInline(admin.TabularInline):
+    """
+    نمایش پاسخ‌های مرتبط با هر تیکت به صورت اینلاین
+    """
+    model = TicketReply
+    extra = 1  # تعداد خطوط خالی اضافه برای پاسخ‌های جدید
+    fields = ('reply_body', 'admin', 'created_at')
+    readonly_fields = ('admin', 'created_at')
+
+    def has_delete_permission(self, request, obj=None):
+        return True
+
+    def save_model(self, request, obj, form, change):
+        # تنظیم مدیر به صورت خودکار هنگام ثبت پاسخ
+        if not obj.admin:
+            obj.admin = request.user
+        super().save_model(request, obj, form, change)
+
+
 @admin.register(Ticket)
 class TicketAdmin(admin.ModelAdmin):
-    list_display = ('subject', 'user', 'status', 'created_at')
+    """
+    نمایش تیکت‌ها با پاسخ‌ها به صورت اینلاین
+    """
+    list_display = ('subject', 'user', 'status', 'created_at', 'updated_at')
     list_filter = ('status', 'created_at')
     search_fields = ('subject', 'user__phone_number')
+    inlines = [TicketReplyInline]
+
+
+@admin.register(ContactInfo)
+class ContactInfoAdmin(admin.ModelAdmin):
+    fieldsets = (
+        ('اطلاعات تماس', {
+            'fields': (
+                'address',
+                'phone_number',
+            )
+        }),
+        ('شبکه‌های اجتماعی', {
+            'fields': (
+                'telegram_id',
+                'ita_id',
+                'whatsapp_id',
+                'instagram_id',
+            )
+        }),
+    )

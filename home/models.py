@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.timezone import now, timedelta
 import random
@@ -136,3 +137,25 @@ class TicketReply(models.Model):
         if self.ticket.status != 'replied':
             self.ticket.status = 'replied'
             self.ticket.save(update_fields=['status'])
+
+
+class ContactInfo(models.Model):
+    address = models.CharField(max_length=255, verbose_name='آدرس', blank=True, null=True)
+    phone_number = models.CharField(max_length=20, verbose_name='شماره تماس', blank=True, null=True)
+    telegram_id = models.CharField(max_length=100, verbose_name='آیدی تلگرام', blank=True, null=True)
+    ita_id = models.CharField(max_length=100, verbose_name='آیدی ایتا', blank=True, null=True)
+    whatsapp_id = models.CharField(max_length=100, verbose_name='آیدی واتساپ', blank=True, null=True)
+    instagram_id = models.CharField(max_length=100, verbose_name='آیدی اینستاگرام', blank=True, null=True)
+
+    class Meta:
+        verbose_name = 'اطلاعات تماس'
+        verbose_name_plural = 'اطلاعات تماس'
+
+    def __str__(self):
+        return "اطلاعات تماس"
+
+    def save(self, *args, **kwargs):
+        # جلوگیری از ایجاد بیش از یک نمونه
+        if not self.pk and ContactInfo.objects.exists():
+            raise ValidationError("فقط یک نمونه از اطلاعات تماس می‌تواند وجود داشته باشد")
+        super().save(*args, **kwargs)

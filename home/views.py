@@ -1,5 +1,6 @@
 from django.contrib.auth import authenticate
-from rest_framework import generics, status, permissions
+from rest_framework import generics, status, permissions, viewsets
+from rest_framework.decorators import action
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -199,9 +200,51 @@ class CorrectRespondersView(APIView):
 
 
 
-class TicketListCreateView(generics.ListCreateAPIView):
+class TicketCreateView(generics.ListCreateAPIView):
+    """
+    API برای ایجاد و مشاهده لیست تیکت‌های کاربر
+    """
+    queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        # نمایش فقط تیکت‌های کاربر لاگین‌شده
         return Ticket.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class TicketDetailView(generics.RetrieveAPIView):
+    """
+    نمایش جزئیات تیکت و چت‌های آن (پاسخ‌ها)
+    """
+    queryset = Ticket.objects.all()
+    serializer_class = TicketSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # کاربران فقط به تیکت‌های خودشان دسترسی دارند
+        return Ticket.objects.filter(user=self.request.user)
+
+
+class TicketReplyView(generics.CreateAPIView):
+    """
+    API برای پاسخ به تیکت توسط مدیر
+    """
+    serializer_class = TicketReplySerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def perform_create(self, serializer):
+        ticket_id = self.kwargs['pk']
+        ticket = Ticket.objects.get(pk=ticket_id)
+        serializer.save(ticket=ticket, admin=self.request.user)
+
+
+class ContactInfoView(generics.RetrieveAPIView):
+    serializer_class = ContactInfoSerializer
+
+    def get_object(self):
+        # دریافت اولین (و تنها) نمونه از ContactInfo
+        return ContactInfo.objects.first()
