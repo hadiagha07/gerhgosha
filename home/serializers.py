@@ -84,7 +84,7 @@ class QuestionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Question
-        fields = ['id', 'text', 'expiry_date', 'is_active', 'choices']
+        fields = ['id', 'text', 'expiry_date', 'is_active', 'choices', 'next_question']
 
 
 class UserResponseSerializer(serializers.ModelSerializer):
@@ -140,3 +140,9 @@ class ContactInfoSerializer(serializers.ModelSerializer):
             'whatsapp_id',
             'instagram_id'
         ]
+
+
+class AboutUsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AboutUs
+        fields = ['content']

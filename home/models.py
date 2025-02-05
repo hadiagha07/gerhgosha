@@ -62,6 +62,7 @@ class Question(models.Model):
     is_active = models.BooleanField(default=False, verbose_name='فعال')
     correct_responders = models.ManyToManyField(User, blank=True, related_name='correct_questions',
                                                 verbose_name='کاربران با پاسخ درست')
+    next_question = models.DateTimeField(verbose_name='تاریخ سوال بعدی')
 
     def __str__(self):
         return self.text[:50]
@@ -159,3 +160,14 @@ class ContactInfo(models.Model):
         if not self.pk and ContactInfo.objects.exists():
             raise ValidationError("فقط یک نمونه از اطلاعات تماس می‌تواند وجود داشته باشد")
         super().save(*args, **kwargs)
+
+
+class AboutUs(models.Model):
+    content = models.TextField(verbose_name='متن درباره ما')
+
+    class Meta:
+        verbose_name = 'درباره ما'
+        verbose_name_plural = 'درباره ما'
+
+    def __str__(self):
+        return self.content[:50]  # نمایش 50 کاراکتر اول

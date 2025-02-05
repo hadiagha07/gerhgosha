@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate
+from django.http import Http404
 from rest_framework import generics, status, permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.views import APIView
@@ -121,7 +122,10 @@ class ActiveQuestionView(generics.RetrieveAPIView):
     serializer_class = QuestionSerializer
 
     def get_object(self):
-        return Question.objects.filter(is_active=True).first()
+        question = Question.objects.filter(is_active=True).first()
+        if not question:
+            raise Http404("سوال فعالی یافت نشد.")
+        return question
 
 
 class SubmitResponseView(APIView):
@@ -248,3 +252,15 @@ class ContactInfoView(generics.RetrieveAPIView):
     def get_object(self):
         # دریافت اولین (و تنها) نمونه از ContactInfo
         return ContactInfo.objects.first()
+
+
+class AboutUsView(generics.RetrieveUpdateAPIView):
+    """نمایش و ویرایش اطلاعات درباره ما"""
+
+    serializer_class = AboutUsSerializer
+
+    def get_object(self):
+        about = AboutUs.objects.first()
+        if not about:
+            raise Http404("اطلاعات درباره ما یافت نشد.")
+        return about

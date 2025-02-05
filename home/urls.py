@@ -30,4 +30,5 @@ urlpatterns = [
     path('tickets/<int:pk>/', TicketDetailView.as_view(), name='ticket_detail'),  # جزئیات تیکت
     path('tickets/<int:pk>/reply/', TicketReplyView.as_view(), name='ticket_reply'),
     path('contact-info/', ContactInfoView.as_view(), name='contact-info'),
+    path('about/', AboutUsView.as_view(), name='about_us'),
 ]

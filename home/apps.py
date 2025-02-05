@@ -1,4 +1,5 @@
 from django.apps import AppConfig
+from django.core.management import call_command
 
 
 class HomeConfig(AppConfig):
@@ -6,5 +7,6 @@ class HomeConfig(AppConfig):
     name = 'home'
 
     def ready(self):
+        import threading
         from .apscheduler import start_scheduler
-        start_scheduler()
+        threading.Thread(target=start_scheduler).start()
